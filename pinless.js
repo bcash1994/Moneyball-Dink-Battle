@@ -38,6 +38,24 @@ PB.publish=async function(silent=false){
   if(!silent) alert('Live scores updated. Players will see the changes within a few seconds.');
 };
 
+PB.resetTournament=async function(){
+  const ok=confirm(`Reset the ${this.N} player tournament from the beginning? This will clear player names, scores, standings, qualifiers, and final results for this tournament size.`);
+  if(!ok) return;
+  clearTimeout(this.publishTimer);
+  try{localStorage.removeItem(this.localKey(this.N));}catch(e){}
+  this.S=this.fresh(this.N);
+  this.render();
+  this.status('Resetting tournament...');
+  try{
+    await this.publish(true);
+    this.status('Tournament reset ✓');
+    alert('Tournament reset complete. The View Only page has also been reset.');
+  }catch(e){
+    this.status('Reset sync error: '+e.message);
+    alert('Tournament reset locally, but live sync failed: '+e.message);
+  }
+};
+
 PB.byeHTML=function(t,r){
   const total=t==='r1'?this.N:this.A;
   const used=new Set();
@@ -50,9 +68,9 @@ PB.byeHTML=function(t,r){
   if(r.db&&r.db.length===2){
     const a=this.esc(this.name(t,r.db[0])), b=this.esc(this.name(t,r.db[1]));
     const extra=resting.filter(i=>!r.db.includes(i)).map(i=>this.esc(this.name(t,i)));
-    text=`<div class="note" style="font-weight:700;margin:6px 0 10px">🏓 BYE TEAM: ${a} + ${b}${extra.length?` &nbsp; • &nbsp; ROTATION REST: ${extra.join(', ')}`:''}</div>`;
+    text=`<div class="byeBanner">🏓 BYE TEAM: ${a} + ${b}${extra.length?` &nbsp; • &nbsp; ROTATION REST: ${extra.join(', ')}`:''}</div>`;
   }else{
-    text=`<div class="note" style="font-weight:700;margin:6px 0 10px">🏓 BYE / REST: ${labels.join(', ')}</div>`;
+    text=`<div class="byeBanner">🏓 BYE / REST: ${labels.join(', ')}</div>`;
   }
   return text;
 };
